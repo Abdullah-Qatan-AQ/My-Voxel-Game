@@ -48,13 +48,32 @@ local tabs = {
 }
 
 --------------------------------------------------------------------------------
--- 🎨 هوك ذكي (Hook) لتطبيق ألوان الأزرار الجديدة على جميع واجهات القائمة تلقائياً
--- تم اختيار الألوان لتناسب النحاس الكلاسيكي وإطار اللوقو الجديد الخاص بك
+-- 🎨 ثيم مبسط وموحد لجميع قوائم اللعبة (الإعدادات، العوالم، المودات، وإنشاء العالم)
+-- يعتمد التصميم المسطح (Flat) بإزالة الحواف المزدوجة وتوحيد الألوان مع الشعار
 --------------------------------------------------------------------------------
 local original_show_formspec = core.show_formspec
 core.show_formspec = function(name, formspec)
 	if formspec then
-		formspec = "style_type[button;bgcolor=#8c7453;bgcolor_hovered=#a68d6b;textcolor=#e1e7ed]" .. formspec
+		formspec = 
+			-- 1. الأزرار: تصميم مسطح بدون حواف بارزة
+			"style_type[button;bgcolor=#8c7453;bgcolor_hovered=#a68d6b;textcolor=#e1e7ed;border=false]" ..
+			
+			-- 2. أزرار التنقل العلوية (التبويبات والأقسام)
+			"style_type[tabheader;bgcolor=#1e262c;textcolor=#a68d6b;selected_bgcolor=#8c7453;selected_textcolor=#e1e7ed]" ..
+			
+			-- 3. قائمة العوالم والمودات (الجداول والقوائم المنسدلة: خلفية داكنة وتحديد نحاسي ناعم)
+			"style_type[textlist;bgcolor=#141a1f;textcolor=#e1e7ed;selected_bgcolor=#8c7453;selected_textcolor=#e1e7ed;border=false]" ..
+			"style_type[table;bgcolor=#141a1f;textcolor=#e1e7ed;selected_bgcolor=#8c7453;selected_textcolor=#e1e7ed;border=false]" ..
+			"style_type[dropdown;bgcolor=#141a1f;textcolor=#e1e7ed;border=false]" ..
+			
+			-- 4. حقول الكتابة (تسمية العالم الجديد أو البحث عن مود)
+			"style_type[field;bgcolor=#141a1f;textcolor=#e1e7ed;border=false]" ..
+			"style_type[textarea;bgcolor=#141a1f;textcolor=#e1e7ed;border=false]" ..
+			
+			-- 5. مربعات الصح والاختيارات (Checkboxes في الإعدادات وإنشاء العالم)
+			"style_type[checkbox;idcolor=#8c7453]" .. 
+			
+			formspec
 	end
 	return original_show_formspec(name, formspec)
 end

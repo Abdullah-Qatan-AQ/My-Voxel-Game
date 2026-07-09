@@ -48,29 +48,37 @@ local tabs = {
 }
 
 --------------------------------------------------------------------------------
--- 🎨 ثيم مبسط وموحد لجميع قوائم اللعبة (الإعدادات، العوالم، المودات، وإنشاء العالم)
--- يعتمد التصميم المسطح (Flat) بإزالة الحواف المزدوجة وتوحيد الألوان مع الشعار
+-- 👑 هوك ذكي لتغيير اسم اللعبة إلى "My Voxel Game" وتطبيق الثيم الموحد
 --------------------------------------------------------------------------------
+-- 1. استبدال اسم المشروع الأساسي باسم شعارك الجديد
+local original_get_version = core.get_version
+core.get_version = function()
+	local version = original_get_version()
+	version.project = "My Voxel Game"
+	return version
+end
+
+-- 2. تطبيق هوك التصميم والألوان المسطحة المبسطة
 local original_show_formspec = core.show_formspec
 core.show_formspec = function(name, formspec)
 	if formspec then
 		formspec = 
-			-- 1. الأزرار: تصميم مسطح بدون حواف بارزة
+			-- الأزرار: تصميم مسطح بدون حواف بارزة
 			"style_type[button;bgcolor=#8c7453;bgcolor_hovered=#a68d6b;textcolor=#e1e7ed;border=false]" ..
 			
-			-- 2. أزرار التنقل العلوية (التبويبات والأقسام)
+			-- أزرار التنقل العلوية (التبويبات والأقسام)
 			"style_type[tabheader;bgcolor=#1e262c;textcolor=#a68d6b;selected_bgcolor=#8c7453;selected_textcolor=#e1e7ed]" ..
 			
-			-- 3. قائمة العوالم والمودات (الجداول والقوائم المنسدلة: خلفية داكنة وتحديد نحاسي ناعم)
+			-- قائمة العوالم والمودات (الجداول والقوائم المنسدلة: خلفية داكنة وتحديد نحاسي ناعم)
 			"style_type[textlist;bgcolor=#141a1f;textcolor=#e1e7ed;selected_bgcolor=#8c7453;selected_textcolor=#e1e7ed;border=false]" ..
 			"style_type[table;bgcolor=#141a1f;textcolor=#e1e7ed;selected_bgcolor=#8c7453;selected_textcolor=#e1e7ed;border=false]" ..
 			"style_type[dropdown;bgcolor=#141a1f;textcolor=#e1e7ed;border=false]" ..
 			
-			-- 4. حقول الكتابة (تسمية العالم الجديد أو البحث عن مود)
+			-- حقول الكتابة (تسمية العالم الجديد أو البحث عن مود)
 			"style_type[field;bgcolor=#141a1f;textcolor=#e1e7ed;border=false]" ..
 			"style_type[textarea;bgcolor=#141a1f;textcolor=#e1e7ed;border=false]" ..
 			
-			-- 5. مربعات الصح والاختيارات (Checkboxes في الإعدادات وإنشاء العالم)
+			-- مربعات الصح والاختيارات (Checkboxes في الإعدادات وإنشاء العالم)
 			"style_type[checkbox;idcolor=#8c7453]" .. 
 			
 			formspec

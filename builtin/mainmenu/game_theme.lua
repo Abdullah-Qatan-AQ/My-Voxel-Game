@@ -4,9 +4,10 @@
 
 mm_game_theme = {}
 
+-- الألوان الجديدة المتناسقة مع شعار لعبتك (My Voxel Game)
 local COLORS = {
-	dark = { clouds = "#1c2a47", sky = "#090b1a" },
-	light = { clouds = "#f0f0ff", sky = "#8cbafa" },
+	dark = { clouds = "#8c7453", sky = "#1e262c" }, -- غيوم بنية نحاسية وسماء زرقاء داكنة كريستالية
+	light = { clouds = "#a68d6b", sky = "#8cbafa" },
 }
 
 --------------------------------------------------------------------------------
@@ -182,3 +183,4 @@ function mm_game_theme.set_music(gamedetails)
 	local music_path = gamedetails.path .. DIR_DELIM .. "menu" .. DIR_DELIM .. "theme"
 	mm_game_theme.music_handle = core.sound_play(music_path, true)
 end
+

@@ -2,8 +2,9 @@
 -- Copyright (C) 2014 sapier
 -- SPDX-License-Identifier: LGPL-2.1-or-later
 
-MAIN_TAB_W = 15.5
-MAIN_TAB_H = 7.1
+-- 🛠️ تم تعديل الأبعاد هنا يدوياً لتكبير الواجهة لملء الشاشة
+MAIN_TAB_W = 20.0
+MAIN_TAB_H = 9.5
 TABHEADER_H = 0.85
 GAMEBAR_H = 1.25
 GAMEBAR_OFFSET_DESKTOP = 0.375

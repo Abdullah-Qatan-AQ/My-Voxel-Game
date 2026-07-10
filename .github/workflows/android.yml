@@ -45,64 +45,6 @@ jobs:
           java-version: '17'
     - name: Download Mineclonia Game
       run: git clone https://codeberg.org/Mineclonia/Mineclonia.git games/mineclonia
-
-    - name: Apply Game Customizations
-      run: |
-        # =========================================================
-        # ✍️ تم ضبط التسمية الخاصة بلعبتك الفخمة هنا تلقائياً:
-        # =========================================================
-        NEW_NAME="My Voxel Game"
-        ENG_ID="MyVoxelGame"
-        PKG_NAME="com.abdullah.myvoxelgame"
-        # =========================================================
-
-        echo "🚀 بدء تطبيق التعديلات التلقائية على اللعبة..."
-
-        # 1. إجبار المحرك على تشغيل حزمة Mineclonia تلقائياً عند الفتح
-        if [ -f builtin/init.lua ]; then
-          sed -i '1i core.settings:set("default_game", "mineclonia")' builtin/init.lua
-          sed -i '2i core.settings:set("menu_last_game", "mineclonia")' builtin/init.lua
-          echo "✅ تم ضبط Mineclonia كلعبة افتراضية تلقائية."
-        fi
-
-        # 2. تغيير اسم التطبيق الذي يظهر تحت الأيقونة في شاشة الجوال الرئيسية
-        if [ -f android/app/src/main/res/values/strings.xml ]; then
-          sed -i "s/>Luanti</>$NEW_NAME</g" android/app/src/main/res/values/strings.xml
-          sed -i "s/>Minetest</>$NEW_NAME</g" android/app/src/main/res/values/strings.xml
-          echo "✅ تم تغيير اسم التطبيق في إعدادات أندرويد إلى: $NEW_NAME"
-        fi
-
-        # 3. تغيير اسم الحزمة داخل إعدادات حزمة Mineclonia الداخلية
-        if [ -f games/mineclonia/game.conf ]; then
-          sed -i "s/title =.*/title = $NEW_NAME/g" games/mineclonia/game.conf
-          sed -i "s/name =.*/name = $ENG_ID/g" games/mineclonia/game.conf
-          echo "✅ تم تعديل ملف conf الخاص بالحزمة."
-        fi
-
-        # 4. استبدال الأسماء الأصلية في واجهات القائمة الرئيسية للمحرك باسم لعبتك
-        find builtin/mainmenu/ -type f -exec sed -i "s/Luanti/$NEW_NAME/g" {} +
-        find builtin/mainmenu/ -type f -exec sed -i "s/Minetest/$NEW_NAME/g" {} +
-        echo "✅ تم استبدال أسماء المحرك في القوائم الرئيسية."
-
-        # 5. تكبير حجم القائمة الرئيسية لكي تشغل المساحة الأكبر من الشاشة
-        if [ -f builtin/mainmenu/init.lua ]; then
-          sed -i 's/size\[12,7.2\]/size[15,8.8]/g' builtin/mainmenu/init.lua
-          sed -i 's/size\[11.5,7.2\]/size[15,8.8]/g' builtin/mainmenu/init.lua
-          echo "✅ تم تكبير أبعاد القائمة الرئيسية بنجاح لملء الشاشة."
-        fi
-
-        # 6. تغيير اسم الحزمة (Package Name) بالكامل لمنع التداخل وجعل اللعبة مستقلة
-        find android/ -name "build.gradle" -exec sed -i "s/applicationId \"net.minetest.minetest\"/applicationId \"$PKG_NAME\"/g" {} +
-        find android/ -name "build.gradle" -exec sed -i "s/applicationId \"org.luanti.luanti\"/applicationId \"$PKG_NAME\"/g" {} +
-        echo "✅ تم تغيير الـ Application ID إلى: $PKG_NAME"
-
-        # 7. تحديث مشاركة الملفات (FileProvider) لتتطابق مع اسم الحزمة الجديد وتمنع كراش اللعبة
-        if [ -f android/app/src/main/AndroidManifest.xml ]; then
-          sed -i "s/net.minetest.minetest.fileprovider/$PKG_NAME.fileprovider/g" android/app/src/main/AndroidManifest.xml
-          sed -i "s/org.luanti.luanti.fileprovider/$PKG_NAME.fileprovider/g" android/app/src/main/AndroidManifest.xml
-          echo "✅ تم تحديث الـ FileProvider بنجاح."
-        fi
-
     - name: Build AAB with Gradle
       run: cd android; ./gradlew bundlerelease
     - name: Build APKs with Gradle
@@ -110,25 +52,25 @@ jobs:
     - name: Save AAB artifact
       uses: actions/upload-artifact@v7
       with:
-        name: MyVoxelGame-release.aab
+        name: Luanti-release.aab
         path: android/app/build/outputs/bundle/release/app-release.aab
     - name: Save armeabi artifact
       uses: actions/upload-artifact@v7
       with:
-        name: MyVoxelGame-armeabi-v7a.apk
+        name: Luanti-armeabi-v7a.apk
         path: android/app/build/outputs/apk/release/app-armeabi-v7a-release-unsigned.apk
     - name: Save arm64 artifact
       uses: actions/upload-artifact@v7
       with:
-        name: MyVoxelGame-arm64-v8a.apk
+        name: Luanti-arm64-v8a.apk
         path: android/app/build/outputs/apk/release/app-arm64-v8a-release-unsigned.apk
     - name: Save x86 artifact
       uses: actions/upload-artifact@v7
       with:
-        name: MyVoxelGame-x86.apk
+        name: Luanti-x86.apk
         path: android/app/build/outputs/apk/release/app-x86-release-unsigned.apk
     - name: Save x86_64 artifact
       uses: actions/upload-artifact@v7
       with:
-        name: MyVoxelGame-x86_64.apk
+        name: Luanti-x86_64.apk
         path: android/app/build/outputs/apk/release/app-x86_64-release-unsigned.apk

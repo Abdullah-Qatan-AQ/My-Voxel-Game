@@ -43,16 +43,39 @@ jobs:
       with:
           distribution: 'temurin'
           java-version: '17'
-    - name: Download Mineclonia Game and Configure Gradle Injection
+    - name: Download Mineclonia and Inject Smart Indexer
       run: |
-        # 1. تحميل اللعبة في مجلد الألعاب الرئيسي للمستودع (الخيار الطبيعي للمحرك)
-        git clone https://codeberg.org/Mineclonia/Mineclonia.git games/mineclonia
+        # 1. إنشاء مجلد الأصول الداخلي وتحميل اللعبة فيه مباشرة لضمان دخولها في الحجم
+        mkdir -p android/app/src/main/assets/games
+        git clone https://codeberg.org/Mineclonia/Mineclonia.git android/app/src/main/assets/games/mineclonia
         
-        # 2. تعيين اللعبة كافتراضية في ملف الإعدادات النموذجي ليتم اعتماده عند الإقلاع الأول
-        echo "default_game = mineclonia" >> minetest.conf.example
-        
-        # 3. حقن كود رسمي في نهاية ملف الـ Gradle لإجبار المحرك على دمج وفهرسة مجلد الألعاب تلقائياً
-        echo -e "\ntasks.named('copyAssets').configure {\n    from '../../games'\n    into 'src/main/assets/games'\n}" >> android/app/build.gradle
+        # 2. تعيين اللعبة كافتراضية عند الإقلاع الأول
+        echo "default_game = mineclonia" > android/app/src/main/assets/minetest.conf
+
+        # 3. حقن سكربت الفهرسة الذكي داخل build.gradle دون الاعتماد على مهام مفقودة
+        cat << 'EOF' >> android/app/build.gradle
+
+        tasks.register("indexMineclonia") {
+            doLast {
+                def assetsDir = file("src/main/assets")
+                def indexFile = file("src/main/assets/index.txt")
+                if (indexFile.exists()) {
+                    fileTree("src/main/assets/games/mineclonia").each { f ->
+                        def relativePath = assetsDir.toPath().relativize(f.toPath()).toString().replace('\\', '/')
+                        if (!indexFile.text.contains(relativePath)) {
+                            indexFile.append("\n" + relativePath)
+                        }
+                    }
+                }
+            }
+        }
+
+        tasks.configureEach { task ->
+            if (task.name.startsWith("merge") && task.name.endsWith("Assets")) {
+                task.dependsOn("indexMineclonia")
+            }
+        }
+        EOF
     - name: Build AAB with Gradle
       run: cd android; ./gradlew bundlerelease
     - name: Build APKs with Gradle

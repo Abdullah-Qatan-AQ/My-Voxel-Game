@@ -44,12 +44,26 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           
-    - name: Absolute Force - Make Mineclonia The Only Internal Game
+    - name: Inject Mineclonia into Gradle Assets Task
       run: |
+        # 1. تحميل لعبة ماينكلونيا في مجلد الألعاب الرئيسي
         git clone https://codeberg.org/Mineclonia/Mineclonia.git games/mineclonia
-        rm -rf games/devtest
-        find android/ -type f -exec sed -i 's/devtest/mineclonia/g' {} +
+        
+        # 2. إجبار المحرك على جعل ماينكلونيا هي اللعبة الافتراضية عند التشغيل
         sed -i 's/"default_game", "[^"]*"/"default_game", "mineclonia"/g' src/defaultsettings.cpp
+        
+        # 3. الحقن البرمجي الصارم داخل Gradle لدمج اللعبة بعد تنظيف الأصول وقبل الضغط
+        cat << 'EOF' >> android/app/build.gradle
+
+        tasks.matching { it.name == "prepareAssets" }.all {
+            doLast {
+                copy {
+                    from "../../games/mineclonia"
+                    into "build/assets/games/mineclonia"
+                }
+            }
+        }
+        EOF
         
     - name: Build AAB with Gradle
       run: cd android; ./gradlew bundlerelease

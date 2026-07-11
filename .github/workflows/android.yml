@@ -43,20 +43,13 @@ jobs:
       with:
           distribution: 'temurin'
           java-version: '17'
-    - name: Hijack Devtest with Mineclonia
+          
+    - name: Embed Mineclonia as Default Game
       run: |
-        # 1. حذف لعبة الاختبارات الأصلية تماماً لتفريغ المجلد
         rm -rf games/devtest
+        git clone https://codeberg.org/Mineclonia/Mineclonia.git games/mineclonia
+        sed -i 's/"default_game", "[^"]*"/"default_game", "mineclonia"/g' src/defaultsettings.cpp
         
-        # 2. تحميل ماينكلونيا مباشرة داخل مجلد devtest لخدعة نظام البناء
-        git clone https://codeberg.org/Mineclonia/Mineclonia.git games/devtest
-        
-        # 3. تعديل المعرف الداخلي للعبة ليطابق اسم المجلد لضمان الفهرسة السليمة
-        sed -i 's/name =.*/name = devtest/g' games/devtest/game.conf
-        sed -i 's/title =.*/title = Mineclonia/g' games/devtest/game.conf
-        
-        # 4. إجبار المحرك على فتح المجلد تلقائياً عند تشغيل اللعبة
-        echo "default_game = devtest" >> minetest.conf.example
     - name: Build AAB with Gradle
       run: cd android; ./gradlew bundlerelease
     - name: Build APKs with Gradle
@@ -86,4 +79,3 @@ jobs:
       with:
         name: Luanti-x86_64.apk
         path: android/app/build/outputs/apk/release/app-x86_64-release-unsigned.apk
-

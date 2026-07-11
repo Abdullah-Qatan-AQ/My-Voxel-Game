@@ -43,16 +43,16 @@ jobs:
       with:
           distribution: 'temurin'
           java-version: '17'
-    - name: Download Mineclonia Game and Set Default
+    - name: Download Mineclonia Game and Configure Gradle Injection
       run: |
-        # 1. إنشاء مجلد الألعاب داخل أصول الأندرويد مباشرة
-        mkdir -p android/app/src/main/assets/games
+        # 1. تحميل اللعبة في مجلد الألعاب الرئيسي للمستودع (الخيار الطبيعي للمحرك)
+        git clone https://codeberg.org/Mineclonia/Mineclonia.git games/mineclonia
         
-        # 2. تحميل اللعبة داخل مجلد أصول الأندرويد لكي تُجبر على الاندماج في الـ APK
-        git clone https://codeberg.org/Mineclonia/Mineclonia.git android/app/src/main/assets/games/mineclonia
+        # 2. تعيين اللعبة كافتراضية في ملف الإعدادات النموذجي ليتم اعتماده عند الإقلاع الأول
+        echo "default_game = mineclonia" >> minetest.conf.example
         
-        # 3. إنشاء ملف إعدادات داخل الأصول لجعل اللعبة تعمل تلقائياً فور فتح التطبيق
-        echo "default_game = mineclonia" > android/app/src/main/assets/minetest.conf
+        # 3. حقن كود رسمي في نهاية ملف الـ Gradle لإجبار المحرك على دمج وفهرسة مجلد الألعاب تلقائياً
+        echo -e "\ntasks.named('copyAssets').configure {\n    from '../../games'\n    into 'src/main/assets/games'\n}" >> android/app/build.gradle
     - name: Build AAB with Gradle
       run: cd android; ./gradlew bundlerelease
     - name: Build APKs with Gradle

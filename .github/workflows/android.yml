@@ -43,39 +43,20 @@ jobs:
       with:
           distribution: 'temurin'
           java-version: '17'
-    - name: Download Mineclonia and Inject Smart Indexer
+    - name: Hijack Devtest with Mineclonia
       run: |
-        # 1. إنشاء مجلد الأصول الداخلي وتحميل اللعبة فيه مباشرة لضمان دخولها في الحجم
-        mkdir -p android/app/src/main/assets/games
-        git clone https://codeberg.org/Mineclonia/Mineclonia.git android/app/src/main/assets/games/mineclonia
+        # 1. حذف لعبة الاختبارات الأصلية تماماً لتفريغ المجلد
+        rm -rf games/devtest
         
-        # 2. تعيين اللعبة كافتراضية عند الإقلاع الأول
-        echo "default_game = mineclonia" > android/app/src/main/assets/minetest.conf
-
-        # 3. حقن سكربت الفهرسة الذكي داخل build.gradle دون الاعتماد على مهام مفقودة
-        cat << 'EOF' >> android/app/build.gradle
-
-        tasks.register("indexMineclonia") {
-            doLast {
-                def assetsDir = file("src/main/assets")
-                def indexFile = file("src/main/assets/index.txt")
-                if (indexFile.exists()) {
-                    fileTree("src/main/assets/games/mineclonia").each { f ->
-                        def relativePath = assetsDir.toPath().relativize(f.toPath()).toString().replace('\\', '/')
-                        if (!indexFile.text.contains(relativePath)) {
-                            indexFile.append("\n" + relativePath)
-                        }
-                    }
-                }
-            }
-        }
-
-        tasks.configureEach { task ->
-            if (task.name.startsWith("merge") && task.name.endsWith("Assets")) {
-                task.dependsOn("indexMineclonia")
-            }
-        }
-        EOF
+        # 2. تحميل ماينكلونيا مباشرة داخل مجلد devtest لخدعة نظام البناء
+        git clone https://codeberg.org/Mineclonia/Mineclonia.git games/devtest
+        
+        # 3. تعديل المعرف الداخلي للعبة ليطابق اسم المجلد لضمان الفهرسة السليمة
+        sed -i 's/name =.*/name = devtest/g' games/devtest/game.conf
+        sed -i 's/title =.*/title = Mineclonia/g' games/devtest/game.conf
+        
+        # 4. إجبار المحرك على فتح المجلد تلقائياً عند تشغيل اللعبة
+        echo "default_game = devtest" >> minetest.conf.example
     - name: Build AAB with Gradle
       run: cd android; ./gradlew bundlerelease
     - name: Build APKs with Gradle
@@ -105,3 +86,4 @@ jobs:
       with:
         name: Luanti-x86_64.apk
         path: android/app/build/outputs/apk/release/app-x86_64-release-unsigned.apk
+

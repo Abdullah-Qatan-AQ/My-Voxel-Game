@@ -51,11 +51,14 @@ jobs:
         # 1. تحميل لعبة ماينكلونيا في مجلد الألعاب الرئيسي
         git clone https://codeberg.org/Mineclonia/Mineclonia.git games/mineclonia
         
-        # 2. إجبار المحرك على جعل ماينكلونيا هي اللعبة الافتراضية عند التشغيل
-        sed -i 's/"default_game", "[^*"/"default_game", "mineclonia"/g' src/defaultsettings.cpp
+        # 2. إجبار المحرك على جعل ماينكلونيا هي اللعبة الافتراضية (تم تصحيح الأمر لتجنب خطأ sed تماماً)
+        sed -i 's/"default_game", "minetest"/"default_game", "mineclonia"/g' src/defaultsettings.cpp
+        sed -i 's/"default_game", ""/"default_game", "mineclonia"/g' src/defaultsettings.cpp
         
-        # 3. [إصلاح الحجم والتداخل]: حذف أوامر التكبير اليدوية تماماً لكي يتفعل نظام التكيف التلقائي 
-        # للمحرك على أندرويد، مما يجعل القوائم تملأ الشاشة وتترتب الأزرار تلقائياً دون أي تداخل بصري.
+        # 3. [إصلاح التداخل والأحجام]: ضبط مقياس الواجهة وحجم الخط برمجياً لمنع تضخم العناصر وتداخلها
+        # ضبط gui_scaling إلى 1.0 والخط إلى 14 سيجعل القوائم تتمدد وتترتب بوضوح ملء الشاشة بدون أي تداخل
+        sed -i 's/"gui_scaling", "[^"]*"/"gui_scaling", "1.0"/g' src/defaultsettings.cpp
+        sed -i 's/"font_size", "[^"]*"/"font_size", "14"/g' src/defaultsettings.cpp
         
         # 4. [خدعة المسافة الفارغة]: تعديل ملف الإعدادات للعبة ليكون الاسم مسافة فارغة لحجب نظام الـ Fallback
         sed -i 's/title =.*/title =  /g' games/mineclonia/game.conf
@@ -68,9 +71,9 @@ jobs:
         # 6. التطهير الشامل لـ Luanti واسم اللعبة من جذور ملفات الـ C++ والـ Lua لضمان عدم ظهورها في القوائم أو الأشرطة العلوية
         find src/ -type f \( -name "*.cpp" -o -name "*.h" \) -exec sed -i 's/"Luanti"/" "/g' {} +
         find builtin/mainmenu/ -type f -name "*.lua" -exec sed -i 's/"Luanti"/" "/g' {} +
-        find builtin/mainmenu/ -type f -name "*.lua" -exec sed -i 's/core.get_project_name()/" "/g' {} +
-        find builtin/mainmenu/ -type f -name "*.lua" -exec sed -i 's/game.title/" "/g' {} +
-        find builtin/mainmenu/ -type f -name "*.lua" -exec sed -i 's/gamedata.title/" "/g' {} +
+        find builtin/mainmenu/ -type f -name "*.lua" -exec sed -i 's/core\.get_project_name()/" "/g' {} +
+        find builtin/mainmenu/ -type f -name "*.lua" -exec sed -i 's/game\.title/" "/g' {} +
+        find builtin/mainmenu/ -type f -name "*.lua" -exec sed -i 's/gamedata\.title/" "/g' {} +
         
         # 7. الحقن البرمجي الصارم داخل Gradle لدمج اللعبة النظيفة والمعدلة بالكامل
         cat << 'EOF' >> android/app/build.gradle

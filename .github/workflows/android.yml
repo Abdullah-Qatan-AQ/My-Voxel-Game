@@ -5,27 +5,7 @@ on:
   push:
     paths:
       - 'lib/**.[ch]'
-      - 'lib/**.cpp'
       - 'src/**.[ch]'
-      - 'src/**.cpp'
-      - 'irr/**.[ch]'
-      - 'irr/**.cpp'
-      - '**/CMakeLists.txt'
-      - 'cmake/Modules/**'
-      - 'po/**.po'
-      - 'android/**'
-      - '.github/workflows/android.yml'
-  pull_request:
-    paths:
-      - 'lib/**.[ch]'
-      - 'lib/**.cpp'
-      - 'src/**.[ch]'
-      - 'src/**.cpp'
-      - 'irr/**.[ch]'
-      - 'irr/**.cpp'
-      - '**/CMakeLists.txt'
-      - 'cmake/Modules/**'
-      - 'po/**.po'
       - 'android/**'
       - '.github/workflows/android.yml'
 
@@ -48,48 +28,37 @@ jobs:
           
     - name: Inject Game, Clean UI, Erase Brands and Adjust Controls
       run: |
-        # 1. تحميل اللعبة داخل مجلد باسم جديد (mygame)
+        # 1. إبادة العلامة التجارية Luanti
+        find . -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.txt" -o -name "*.po" \) -exec sed -i 's/Luanti/MyGame/g' {} +
+        find . -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.txt" -o -name "*.po" \) -exec sed -i 's/luanti/mygame/g' {} +
+        
+        # 2. تحميل اللعبة
         git clone https://codeberg.org/Mineclonia/Mineclonia.git games/mygame
         
-        # 2. إعادة كتابة ملف الإعدادات بالكامل لمسح اسم Mineclonia
+        # 3. إعدادات اللعبة
         cat << 'EOF' > games/mygame/game.conf
         name = mygame
         title = My Voxel Game
-        description = A survival sandbox game. Survive, gather, hunt, build, explore, and do much more.
+        description = A survival sandbox game.
         allowed_privs = interact, shout, fast, fly, noclip, privs, basic_privs
         EOF
         
-        # 3. حذف صور القوائم والشاشات التوضيحية القديمة
-        rm -f games/mygame/menu/header.png
-        rm -f games/mygame/menu/icon.png
-        rm -f games/mygame/menu/background.png
-        rm -f games/mygame/screenshot.png
+        # 4. حذف صور القوائم
+        rm -f games/mygame/menu/*.png games/mygame/screenshot.png
         
-        # 4. إجبار المحرك على تشغيل لعبتك بشكل افتراضي
+        # 5. ضبط إعدادات المحرك
         sed -i 's/"default_game", "minetest"/"default_game", "mygame"/g' src/defaultsettings.cpp
-        sed -i 's/"default_game", ""/"default_game", "mygame"/g' src/defaultsettings.cpp
-        
-        # 5. إصلاح حجم وتداخل الواجهة
         sed -i 's/"gui_scaling", "[^"]*"/"gui_scaling", "1.0"/g' src/defaultsettings.cpp
         
-        # 6. إزالة شعارات محرك Luanti من أعلى الشاشة
-        find textures/ -type f \( -name "*header.png" -o -name "*logo.png" \) -delete
+        # 6. إصلاح أزرار التحكم (مع البحث الآمن عن الملف)
+        GUI_FILE=$(find src -name "touchscreengui.cpp" | head -n 1)
+        if [ -f "$GUI_FILE" ]; then
+            sed -i 's/m_screensize\.Y[ \t]*-/m_screensize.Y - 120 -/g' "$GUI_FILE"
+            sed -i 's/screensize\.Y[ \t]*-/screensize.Y - 120 -/g' "$GUI_FILE"
+        fi
         
-        # 7. الحل الذكي لإخفاء الأخطاء الحمراء (توليد صور شفافة لإسكات المحرك)
-        mkdir -p games/mygame/textures
-        PNG_B64="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
-        for type in health breath hunger armor; do
-            echo "$PNG_B64" | base64 -d > "games/mygame/textures/hudbars_icon_${type}.png"
-            echo "$PNG_B64" | base64 -d > "games/mygame/textures/hudbars_bgicon_${type}.png"
-        done
-        
-        # 8. تعديل أكواد C++ لرفع أزرار التحكم (القفز والجلوس وعصا الحركة) 120 بكسل للأعلى
-        sed -i 's/m_screensize\.Y[ \t]*-/m_screensize.Y - 120 -/g' src/gui/touchscreengui.cpp
-        sed -i 's/screensize\.Y[ \t]*-/screensize.Y - 120 -/g' src/gui/touchscreengui.cpp
-        
-        # 9. دمج ملفات اللعبة مع نظام الأندرويد
+        # 7. دمج اللعبة مع نظام الأندرويد
         cat << 'EOF' >> android/app/build.gradle
-
         tasks.matching { it.name == "prepareAssets" }.all {
             doLast {
                 copy {
@@ -100,39 +69,18 @@ jobs:
         }
         EOF
         
-    - name: Build AAB with Gradle
-      run: cd android; ./gradlew bundlerelease
+    - name: Build AAB and APKs with Gradle
+      run: |
+        cd android
+        chmod +x gradlew
+        ./gradlew bundlerelease
+        ./gradlew assemblerelease
       
-    - name: Build APKs with Gradle
-      run: cd android; ./gradlew assemblerelease
-      
-    - name: Save AAB artifact
+    - name: Save Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: MyVoxelGame-release.aab
-        path: android/app/build/outputs/bundle/release/app-release.aab
-        
-    - name: Save armeabi artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: MyVoxelGame-armeabi-v7a.apk
-        path: android/app/build/outputs/apk/release/app-armeabi-v7a-release-unsigned.apk
-        
-    - name: Save arm64 artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: MyVoxelGame-arm64-v8a.apk
-        path: android/app/build/outputs/apk/release/app-arm64-v8a-release-unsigned.apk
-        
-    - name: Save x86 artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: MyVoxelGame-x86.apk
-        path: android/app/build/outputs/apk/release/app-x86-release-unsigned.apk
-        
-    - name: Save x86_64 artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: MyVoxelGame-x86_64.apk
-        path: android/app/build/outputs/apk/release/app-x86_64-release-unsigned.apk
+        name: MyVoxelGame-Artifacts
+        path: |
+          android/app/build/outputs/bundle/release/*.aab
+          android/app/build/outputs/apk/release/*.apk
 

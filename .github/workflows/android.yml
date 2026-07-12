@@ -12,6 +12,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        abi: [armeabi-v7a, arm64-v8a, x86, x86_64]
     steps:
     - uses: actions/checkout@v4
     
@@ -26,7 +29,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           
-    - name: Inject Game, Clean UI, Erase Brands and Adjust Controls
+    - name: Setup Game and Clean Branding
       run: |
         # 1. إبادة العلامة التجارية Luanti
         find . -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.txt" -o -name "*.po" \) -exec sed -i 's/Luanti/MyGame/g' {} +
@@ -35,52 +38,41 @@ jobs:
         # 2. تحميل اللعبة
         git clone https://codeberg.org/Mineclonia/Mineclonia.git games/mygame
         
-        # 3. إعدادات اللعبة
+        # 3. إعدادات اللعبة وحذف الصور
         cat << 'EOF' > games/mygame/game.conf
         name = mygame
         title = My Voxel Game
-        description = A survival sandbox game.
-        allowed_privs = interact, shout, fast, fly, noclip, privs, basic_privs
         EOF
-        
-        # 4. حذف صور القوائم
         rm -f games/mygame/menu/*.png games/mygame/screenshot.png
         
-        # 5. ضبط إعدادات المحرك
+        # 4. إعدادات المحرك
         sed -i 's/"default_game", "minetest"/"default_game", "mygame"/g' src/defaultsettings.cpp
         sed -i 's/"gui_scaling", "[^"]*"/"gui_scaling", "1.0"/g' src/defaultsettings.cpp
         
-        # 6. إصلاح أزرار التحكم (مع البحث الآمن عن الملف)
+        # 5. إصلاح أزرار التحكم
         GUI_FILE=$(find src -name "touchscreengui.cpp" | head -n 1)
         if [ -f "$GUI_FILE" ]; then
             sed -i 's/m_screensize\.Y[ \t]*-/m_screensize.Y - 120 -/g' "$GUI_FILE"
             sed -i 's/screensize\.Y[ \t]*-/screensize.Y - 120 -/g' "$GUI_FILE"
         fi
         
-        # 7. دمج اللعبة مع نظام الأندرويد
+        # 6. دمج الأصول
         cat << 'EOF' >> android/app/build.gradle
         tasks.matching { it.name == "prepareAssets" }.all {
             doLast {
-                copy {
-                    from "../../games/mygame"
-                    into "build/assets/games/mygame"
-                }
+                copy { from "../../games/mygame"; into "build/assets/games/mygame" }
             }
         }
         EOF
-        
-    - name: Build AAB and APKs with Gradle
+
+    - name: Build Specific ABI
       run: |
         cd android
         chmod +x gradlew
-        ./gradlew bundlerelease
-        ./gradlew assemblerelease
+        ./gradlew assembleRelease -Pandroid.abifilters=${{ matrix.abi }}
       
-    - name: Save Artifacts
+    - name: Save Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: MyVoxelGame-Artifacts
-        path: |
-          android/app/build/outputs/bundle/release/*.aab
-          android/app/build/outputs/apk/release/*.apk
-
+        name: MyVoxelGame-${{ matrix.abi }}
+        path: android/app/build/outputs/apk/release/*-${{ matrix.abi }}-release-unsigned.apk

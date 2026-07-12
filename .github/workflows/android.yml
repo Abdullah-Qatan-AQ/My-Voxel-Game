@@ -31,33 +31,46 @@ jobs:
           
     - name: Inject Game, Scale UI and Erase Branding
       run: |
-        # 1. إبادة العلامة التجارية (نصوص فقط، مع الحفاظ على libluanti.so)
-        # نستثني المكتبة الأساسية من الاستبدال ليعمل التطبيق
-        find . -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.txt" -o -name "*.po" \) -not -name "CMakeLists.txt" -exec sed -i 's/Luanti/MyGame/g' {} +
-        find . -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.txt" -o -name "*.po" \) -not -name "CMakeLists.txt" -exec sed -i 's/luanti/mygame/g' {} +
+        # 1. مسح كلمة Luanti من الكود وقوائم اللعبة (Lua)
+        find . -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.txt" -o -name "*.po" \) -not -name "CMakeLists.txt" -exec sed -i 's/Luanti/My Voxel Game/g' {} +
+        find builtin/ -type f -name "*.lua" -exec sed -i 's/Luanti/My Voxel Game/g' {} +
+        find builtin/ -type f -name "*.lua" -exec sed -i 's/luanti/my voxel game/g' {} +
         
-        # 2. تحميل اللعبة
+        # 2. إخفاء شعار Luanti الضخم (استبدال الصور بصورة شفافة بدلاً من حذفها)
+        PNG_B64="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+        for img in $(find textures/ -type f \( -name "*header.png" -o -name "*logo.png" \)); do
+            echo "$PNG_B64" | base64 -d > "$img"
+        done
+        
+        # 3. تحميل اللعبة
         git clone https://codeberg.org/Mineclonia/Mineclonia.git games/mygame
         
-        # 3. إعدادات اللعبة
+        # 4. حل مشكلة الـ (mcl_core) عبر إجبار المحرك على ترتيب تحميل المودات
+        echo "mcl_core" >> games/mygame/mods/CORE/_mcl_autogroup/depends.txt
+        MOD_CONF="games/mygame/mods/CORE/_mcl_autogroup/mod.conf"
+        if [ -f "$MOD_CONF" ]; then
+            sed -i 's/depends =/depends = mcl_core, /g' "$MOD_CONF"
+        fi
+        
+        # 5. إعدادات اللعبة وحذف صور القوائم القديمة
         cat << 'EOF' > games/mygame/game.conf
         name = mygame
         title = My Voxel Game
         EOF
         rm -f games/mygame/menu/*.png games/mygame/screenshot.png
         
-        # 4. إجبار اللعبة على العمل وتكبير حجم القائمة (gui_scaling 1.3)
+        # 6. إجبار اللعبة للعمل وضبط الواجهة (1.15) لمنع التداخل
         sed -i 's/"default_game", "minetest"/"default_game", "mygame"/g' src/defaultsettings.cpp
-        sed -i 's/"gui_scaling", "[^"]*"/"gui_scaling", "1.3"/g' src/defaultsettings.cpp
+        sed -i 's/"gui_scaling", "[^"]*"/"gui_scaling", "1.15"/g' src/defaultsettings.cpp
         
-        # 5. إصلاح أزرار التحكم
+        # 7. إصلاح أزرار التحكم
         GUI_FILE=$(find src -name "touchscreengui.cpp" | head -n 1)
         if [ -f "$GUI_FILE" ]; then
             sed -i 's/m_screensize\.Y[ \t]*-/m_screensize.Y - 120 -/g' "$GUI_FILE"
             sed -i 's/screensize\.Y[ \t]*-/screensize.Y - 120 -/g' "$GUI_FILE"
         fi
         
-        # 6. دمج الأصول
+        # 8. دمج الأصول
         cat << 'EOF' >> android/app/build.gradle
         tasks.matching { it.name == "prepareAssets" }.all {
             doLast {

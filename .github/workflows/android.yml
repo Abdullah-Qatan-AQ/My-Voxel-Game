@@ -94,6 +94,11 @@ jobs:
         unzip -q mcl_decor.zip -d games/mygame/mods/
         rm mcl_decor.zip
         
+        # المود المساعد لـ mcl_decor (mcl_cozy)
+        wget -qO mcl_cozy.zip "https://content.luanti.org/packages/rudzik8/mcl_cozy/releases/33419/download/"
+        unzip -q mcl_cozy.zip -d games/mygame/mods/
+        rm mcl_cozy.zip
+        
         # المود الثاني: mcl_extra_structures
         wget -qO mcl_extra_structures.zip "https://content.luanti.org/packages/mt-mods/mcl_extra_structures/releases/34000/download/"
         unzip -q mcl_extra_structures.zip -d games/mygame/mods/
@@ -124,3 +129,4 @@ jobs:
       with:
         name: MyVoxelGame-${{ matrix.abi }}
         path: android/app/build/outputs/apk/release/*-${{ matrix.abi }}-release-unsigned.apk
+

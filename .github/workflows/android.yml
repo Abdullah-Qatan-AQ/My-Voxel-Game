@@ -61,13 +61,15 @@ jobs:
         # حذف صور القوائم القديمة لماينكلونيا لمنع التداخل
         rm -f games/mygame/menu/*.png games/mygame/screenshot.png
         
-        # [تعديل الخلفية]: التأكد من وجود صورتك المخصصة ثم نقلها وتثبيتها في المحرك واللعبة
+        # [تعديل الخلفية]: التأكد من وجود صورتك المخصصة ونقلها لمجلد اللعبة المعتمد
         if [ -f "my_background.png" ]; then
             mkdir -p games/mygame/menu
             cp my_background.png games/mygame/menu/background.png
             cp my_background.png games/mygame/menu/menu_background.png
-            # إجبار المحرك الافتراضي على قراءة الصورة بدلاً من تفعيل السحب ثلاثية الأبعاد
-            echo "mainmenu_background_texture = menu_background.png" >> src/defaultsettings.cpp
+            
+            # حقن إعداد القوام الافتراضي برمجياً داخل C++ بطريقة متوافقة لتجنب أخطاء السنتاكس
+            # سنقوم بإدراج الإعداد الافتراضي للخلفية مباشرة بعد دالة الإعدادات الأساسية
+            sed -i '/void set_default_settings/a \ \ \ \ settings->setDefault("mainmenu_background_texture", "menu_background.png");' src/defaultsettings.cpp
         fi
         
         # 6. إجبار اللعبة للعمل وضبط الواجهة (1.15) لمنع التداخل

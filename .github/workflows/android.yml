@@ -58,20 +58,19 @@ jobs:
         title = My Voxel Game
         EOF
         
-        # حذف صور القوائم القديمة لمنع التداخل
         rm -f games/mygame/menu/*.png games/mygame/screenshot.png
         
-        # [تعديل الخلفية]: الحقن السليم برمجياً داخل C++
+        # [تعديل الخلفية]: الطريقة الآمنة جداً للحقن بناءً على طلب الكومبايلر
         if [ -f "my_background.png" ]; then
             mkdir -p games/mygame/menu
             cp my_background.png games/mygame/menu/background.png
             cp my_background.png games/mygame/menu/menu_background.png
             
-            # هذا الأمر يبحث عن الدالة، يتخطى سطرها، ويدخل الإعدادات بأمان تحت القوس المفتوح {
-            sed -i '/void set_default_settings/{n;s/.*/&\n\tsettings->setDefault("mainmenu_background_texture", "menu_background.png");/}' src/defaultsettings.cpp
+            # البحث عن سطر موجود مسبقاً وحقن المتغير الصحيح g_settings تحته مباشرة لتفادي أي خطأ
+            sed -i '/"default_game"/a \ \ \ \ g_settings->setDefault("mainmenu_background_texture", "menu_background.png");' src/defaultsettings.cpp
         fi
         
-        # 6. إجبار اللعبة للعمل وضبط الواجهة (1.15) لمنع التداخل
+        # 6. إجبار اللعبة للعمل وضبط الواجهة
         sed -i 's/"default_game", "minetest"/"default_game", "mygame"/g' src/defaultsettings.cpp
         sed -i 's/"gui_scaling", "[^"]*"/"gui_scaling", "1.15"/g' src/defaultsettings.cpp
 
@@ -102,4 +101,3 @@ jobs:
       with:
         name: MyVoxelGame-${{ matrix.abi }}
         path: android/app/build/outputs/apk/release/*-${{ matrix.abi }}-release-unsigned.apk
-

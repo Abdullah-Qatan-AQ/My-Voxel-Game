@@ -21,7 +21,7 @@ jobs:
     - name: Install deps
       run: |
         sudo apt-get update
-        sudo apt-get install -y --no-install-recommends gettext
+        sudo apt-get install -y --no-install-recommends gettext unzip wget
         
     - name: Set up JDK 17
       uses: actions/setup-java@v4
@@ -29,7 +29,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           
-    - name: Inject Game, Scale UI, Background and Erase Branding
+    - name: Inject Game, Scale UI, Background, Erase Branding and Add Mods
       run: |
         # 1. مسح كلمة Luanti من الكود وقوائم اللعبة (Lua)
         find . -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.txt" -o -name "*.po" \) -not -name "CMakeLists.txt" -exec sed -i 's/Luanti/My Voxel Game/g' {} +
@@ -60,13 +60,20 @@ jobs:
         
         rm -f games/mygame/menu/*.png games/mygame/screenshot.png
         
-        # [تعديل الخلفية]: الطريقة الآمنة جداً للحقن بناءً على طلب الكومبايلر
+        # [تعديل الخلفية الشامل لجميع القوائم والصفحات]:
         if [ -f "my_background.png" ]; then
-            mkdir -p games/mygame/menu
+            mkdir -p games/mygame/menu textures/base/pack builtin/textures
             cp my_background.png games/mygame/menu/background.png
             cp my_background.png games/mygame/menu/menu_background.png
+            cp my_background.png textures/base/pack/background.png
+            cp my_background.png textures/base/pack/menu_background.png
+            cp my_background.png builtin/textures/menu_background.png || true
+            cp my_background.png builtin/textures/background.png || true
             
-            # البحث عن سطر موجود مسبقاً وحقن المتغير الصحيح g_settings تحته مباشرة لتفادي أي خطأ
+            find builtin/mainmenu/ -type f -name "*.lua" -exec sed -i 's/mainmenu_background_texture = ""/mainmenu_background_texture = "menu_background.png"/g' {} +
+            find builtin/mainmenu/ -type f -name "*.lua" -exec sed -i 's/set("mainmenu_background_texture", "")/set("mainmenu_background_texture", "menu_background.png")/g' {} +
+            
+            sed -i '/"default_game"/a \ \ \ \ g_settings->setDefault("menuclouds", "false");' src/defaultsettings.cpp
             sed -i '/"default_game"/a \ \ \ \ g_settings->setDefault("mainmenu_background_texture", "menu_background.png");' src/defaultsettings.cpp
         fi
         
@@ -81,7 +88,23 @@ jobs:
             sed -i 's/screensize\.Y[ \t]*-/screensize.Y - 120 -/g' "$GUI_FILE"
         fi
         
-        # 8. دمج الأصول داخل الأندرويد
+        # 8. دمج المودات تلقائياً من متجر لونتي
+        # المود الأول: mcl_decor
+        wget -qO mcl_decor.zip "https://content.luanti.org/packages/rudzik8/mcl_decor/releases/35460/download/"
+        unzip -q mcl_decor.zip -d games/mygame/mods/
+        rm mcl_decor.zip
+        
+        # المود الثاني: mcl_extra_structures
+        wget -qO mcl_extra_structures.zip "https://content.luanti.org/packages/mt-mods/mcl_extra_structures/releases/34000/download/"
+        unzip -q mcl_extra_structures.zip -d games/mygame/mods/
+        rm mcl_extra_structures.zip
+        
+        # المود الثالث: vilja_pix_2
+        wget -qO vilja_pix_2.zip "https://content.luanti.org/packages/ROllerozxa/vilja_pix_2/releases/28366/download/"
+        unzip -q vilja_pix_2.zip -d games/mygame/mods/
+        rm vilja_pix_2.zip
+        
+        # 9. دمج الأصول داخل الأندرويد
         cat << 'EOF' >> android/app/build.gradle
         tasks.matching { it.name == "prepareAssets" }.all {
             doLast {

@@ -29,7 +29,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           
-    - name: Inject Game, Scale UI and Erase Branding
+    - name: Inject Game, Scale UI, Background and Erase Branding
       run: |
         # 1. مسح كلمة Luanti من الكود وقوائم اللعبة (Lua)
         find . -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.txt" -o -name "*.po" \) -not -name "CMakeLists.txt" -exec sed -i 's/Luanti/My Voxel Game/g' {} +
@@ -42,7 +42,7 @@ jobs:
             echo "$PNG_B64" | base64 -d > "$img"
         done
         
-        # 3. تحميل اللعبة
+        # 3. تحميل لعبة ماينكلونيا
         git clone https://codeberg.org/Mineclonia/Mineclonia.git games/mygame
         
         # 4. حل مشكلة الـ (mcl_core) عبر إجبار المحرك على ترتيب تحميل المودات
@@ -52,25 +52,36 @@ jobs:
             sed -i 's/depends =/depends = mcl_core, /g' "$MOD_CONF"
         fi
         
-        # 5. إعدادات اللعبة وحذف صور القوائم القديمة
+        # 5. إعدادات اللعبة وحقن الخلفية الخاصة بك
         cat << 'EOF' > games/mygame/game.conf
         name = mygame
         title = My Voxel Game
         EOF
+        
+        # حذف صور القوائم القديمة لماينكلونيا لمنع التداخل
         rm -f games/mygame/menu/*.png games/mygame/screenshot.png
+        
+        # [تعديل الخلفية]: التأكد من وجود صورتك المخصصة ثم نقلها وتثبيتها في المحرك واللعبة
+        if [ -f "my_background.png" ]; then
+            mkdir -p games/mygame/menu
+            cp my_background.png games/mygame/menu/background.png
+            cp my_background.png games/mygame/menu/menu_background.png
+            # إجبار المحرك الافتراضي على قراءة الصورة بدلاً من تفعيل السحب ثلاثية الأبعاد
+            echo "mainmenu_background_texture = menu_background.png" >> src/defaultsettings.cpp
+        fi
         
         # 6. إجبار اللعبة للعمل وضبط الواجهة (1.15) لمنع التداخل
         sed -i 's/"default_game", "minetest"/"default_game", "mygame"/g' src/defaultsettings.cpp
         sed -i 's/"gui_scaling", "[^"]*"/"gui_scaling", "1.15"/g' src/defaultsettings.cpp
-        
-        # 7. إصلاح أزرار التحكم
+
+        # 7. إصلاح أزرار التحكم للهواتف
         GUI_FILE=$(find src -name "touchscreengui.cpp" | head -n 1)
         if [ -f "$GUI_FILE" ]; then
             sed -i 's/m_screensize\.Y[ \t]*-/m_screensize.Y - 120 -/g' "$GUI_FILE"
             sed -i 's/screensize\.Y[ \t]*-/screensize.Y - 120 -/g' "$GUI_FILE"
         fi
         
-        # 8. دمج الأصول
+        # 8. دمج الأصول داخل الأندرويد
         cat << 'EOF' >> android/app/build.gradle
         tasks.matching { it.name == "prepareAssets" }.all {
             doLast {

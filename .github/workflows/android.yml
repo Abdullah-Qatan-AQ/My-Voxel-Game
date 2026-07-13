@@ -36,7 +36,7 @@ jobs:
         find builtin/ -type f -name "*.lua" -exec sed -i 's/Luanti/My Voxel Game/g' {} +
         find builtin/ -type f -name "*.lua" -exec sed -i 's/luanti/my voxel game/g' {} +
         
-        # 2. إخفاء شعار Luanti الضخم (استبدال الصور بصورة شفافة بدلاً من حذفها)
+        # 2. إخفاء شعار Luanti الضخم (استبدال الصور بصورة شفافة)
         PNG_B64="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
         for img in $(find textures/ -type f \( -name "*header.png" -o -name "*logo.png" \)); do
             echo "$PNG_B64" | base64 -d > "$img"
@@ -45,31 +45,30 @@ jobs:
         # 3. تحميل لعبة ماينكلونيا
         git clone https://codeberg.org/Mineclonia/Mineclonia.git games/mygame
         
-        # 4. حل مشكلة الـ (mcl_core) عبر إجبار المحرك على ترتيب تحميل المودات
+        # 4. حل مشكلة الـ (mcl_core)
         echo "mcl_core" >> games/mygame/mods/CORE/_mcl_autogroup/depends.txt
         MOD_CONF="games/mygame/mods/CORE/_mcl_autogroup/mod.conf"
         if [ -f "$MOD_CONF" ]; then
             sed -i 's/depends =/depends = mcl_core, /g' "$MOD_CONF"
         fi
         
-        # 5. إعدادات اللعبة وحقن الخلفية الخاصة بك
+        # 5. إعدادات اللعبة
         cat << 'EOF' > games/mygame/game.conf
         name = mygame
         title = My Voxel Game
         EOF
         
-        # حذف صور القوائم القديمة لماينكلونيا لمنع التداخل
+        # حذف صور القوائم القديمة لمنع التداخل
         rm -f games/mygame/menu/*.png games/mygame/screenshot.png
         
-        # [تعديل الخلفية]: التأكد من وجود صورتك المخصصة ونقلها لمجلد اللعبة المعتمد
+        # [تعديل الخلفية]: الحقن السليم برمجياً داخل C++
         if [ -f "my_background.png" ]; then
             mkdir -p games/mygame/menu
             cp my_background.png games/mygame/menu/background.png
             cp my_background.png games/mygame/menu/menu_background.png
             
-            # حقن إعداد القوام الافتراضي برمجياً داخل C++ بطريقة متوافقة لتجنب أخطاء السنتاكس
-            # سنقوم بإدراج الإعداد الافتراضي للخلفية مباشرة بعد دالة الإعدادات الأساسية
-            sed -i '/void set_default_settings/a \ \ \ \ settings->setDefault("mainmenu_background_texture", "menu_background.png");' src/defaultsettings.cpp
+            # هذا الأمر يبحث عن الدالة، يتخطى سطرها، ويدخل الإعدادات بأمان تحت القوس المفتوح {
+            sed -i '/void set_default_settings/{n;s/.*/&\n\tsettings->setDefault("mainmenu_background_texture", "menu_background.png");/}' src/defaultsettings.cpp
         fi
         
         # 6. إجبار اللعبة للعمل وضبط الواجهة (1.15) لمنع التداخل
@@ -103,3 +102,4 @@ jobs:
       with:
         name: MyVoxelGame-${{ matrix.abi }}
         path: android/app/build/outputs/apk/release/*-${{ matrix.abi }}-release-unsigned.apk
+

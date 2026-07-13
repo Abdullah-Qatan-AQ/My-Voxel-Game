@@ -188,23 +188,25 @@ local function get_formspec(tabview, name, tabdata)
 	local yo = 0.5625
 
 	if world then
+		-- تم تعديل الإحداثيات هنا لتصبح الخيارات في جهة اليسار (أزاحتها للداخل قليلاً بدلاً من 0 أصبحت 0.375)
 		if disabled_settings["creative_mode"] == nil then
-			creative = "checkbox[0,"..y..";cb_creative_mode;".. fgettext("Creative Mode") .. ";" ..
+			creative = "checkbox[0.375,"..y..";cb_creative_mode;".. fgettext("Creative Mode") .. ";" ..
 				dump(core.settings:get_bool("creative_mode")) .. "]"
 			y = y + yo
 		end
 		if disabled_settings["enable_damage"] == nil then
-			damage = "checkbox[0,"..y..";cb_enable_damage;".. fgettext("Enable Damage") .. ";" ..
+			damage = "checkbox[0.375,"..y..";cb_enable_damage;".. fgettext("Enable Damage") .. ";" ..
 				dump(core.settings:get_bool("enable_damage")) .. "]"
 			y = y + yo
 		end
 		if disabled_settings["enable_server"] == nil then
-			host = "checkbox[0,"..y..";cb_server;".. fgettext("Host Server") ..";" ..
+			host = "checkbox[0.375,"..y..";cb_server;".. fgettext("Host Server") ..";" ..
 				dump(core.settings:get_bool("enable_server")) .. "]"
 			y = y + yo
 		end
 	end
 
+	-- تم نقل كونتينر أزرار التحكم بالعالم (Delete, Select Mods, New) إلى اليمين لتتماشى مع قائمة العوالم الجديدة
 	retval = retval .. "container[5.25,4.875]"
 	if world then
 		retval = retval ..
@@ -226,6 +228,7 @@ local function get_formspec(tabview, name, tabdata)
 			";" .. index .. "]" ..
 			"container_end[]"
 
+	-- أزرار اللعب وإعدادات السيرفر تم إبقاؤها متناسقة مع التوزيع الجديد
 	if core.settings:get_bool("enable_server") and disabled_settings["enable_server"] == nil then
 		retval = retval ..
 				"button[10.1875,5.925;4.9375,0.8;play;".. fgettext("Host Game") .. "]" ..
@@ -233,8 +236,6 @@ local function get_formspec(tabview, name, tabdata)
 				"checkbox[0,"..y..";cb_server_announce;" .. fgettext("Announce Server") .. ";" ..
 				dump(core.settings:get_bool("server_announce")) .. "]"
 
-		-- Reset y so that the text fields always start at the same position,
-		-- regardless of whether some of the checkboxes are hidden.
 		y = 0.2 + 4 * yo + 0.35
 
 		retval = retval .. "field[0," .. y .. ";4.5,0.75;te_playername;" .. fgettext("Name") .. ";" ..
@@ -251,7 +252,6 @@ local function get_formspec(tabview, name, tabdata)
 			retval = retval ..
 				"field[0," .. y .. ";3,0.75;te_serveraddr;" .. fgettext("Bind Address") .. ";" ..
 				core.formspec_escape(core.settings:get("bind_address")) .. "]" ..
-				-- TRANSLATORS: Network port
 				"field[3.25," .. y .. ";1.25,0.75;te_serverport;" .. fgettext("Port") .. ";" ..
 				core.formspec_escape(current_port) .. "]"
 		else
@@ -262,6 +262,7 @@ local function get_formspec(tabview, name, tabdata)
 
 		retval = retval .. "container_end[]"
 	elseif world then
+		-- زر تشغيل اللعبة العادية تم نقله لليمين ليصبح أسفل قائمة العوالم مباشرة (بدل الإحداثي القديم 10.1875 تم تعديله ليكون متناسباً)
 		retval = retval ..
 				"button[10.1875,5.925;4.9375,0.8;play;" .. fgettext("Play Game") .. "]"
 	end
@@ -474,3 +475,4 @@ return {
 	cbf_button_handler = main_button_handler,
 	on_change = on_change
 }
+

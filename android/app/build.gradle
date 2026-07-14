@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 android {
 	ndkVersion "$ndk_version"
 	defaultConfig {
-		applicationId 'net.minetest.minetest'
+		applicationId 'com.abdullahqatan.myvoxelgame'
 		minSdkVersion 21
 		compileSdk 34
 		targetSdkVersion 35
@@ -52,7 +52,7 @@ android {
 		sourceCompatibility JavaVersion.VERSION_1_8
 		targetCompatibility JavaVersion.VERSION_1_8
 	}
-	namespace 'net.minetest.minetest'
+	namespace 'com.abdullahqatan.myvoxelgame'
 }
 
 task prepareAssets() {
@@ -120,3 +120,4 @@ dependencies {
 	implementation project(':native')
 	implementation 'androidx.appcompat:appcompat:1.6.1'
 }
+

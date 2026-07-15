@@ -88,7 +88,7 @@ jobs:
             sed -i 's/screensize\.Y[ \t]*-/screensize.Y - 120 -/g' "$GUI_FILE"
         fi
         
-        # 8. دمج المودات تلقائياً من متجر لونتي
+        # 8. دمج المودات تلقائياً من متجر لونتي (تمت إزالة مود الرسوميات بنجاح)
         # المود الأول: mcl_decor
         wget -qO mcl_decor.zip "https://content.luanti.org/packages/rudzik8/mcl_decor/releases/35460/download/"
         unzip -q mcl_decor.zip -d games/mygame/mods/
@@ -103,11 +103,6 @@ jobs:
         wget -qO mcl_extra_structures.zip "https://content.luanti.org/packages/mt-mods/mcl_extra_structures/releases/34000/download/"
         unzip -q mcl_extra_structures.zip -d games/mygame/mods/
         rm mcl_extra_structures.zip
-        
-        # المود الثالث: vilja_pix_2
-        wget -qO vilja_pix_2.zip "https://content.luanti.org/packages/ROllerozxa/vilja_pix_2/releases/28366/download/"
-        unzip -q vilja_pix_2.zip -d games/mygame/mods/
-        rm vilja_pix_2.zip
         
         # 9. دمج الأصول داخل الأندرويد
         cat << 'EOF' >> android/app/build.gradle

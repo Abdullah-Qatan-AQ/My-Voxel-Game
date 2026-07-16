@@ -12,9 +12,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        abi: [armeabi-v7a, arm64-v8a, x86, x86_64]
     steps:
     - uses: actions/checkout@v4
     
@@ -111,17 +108,31 @@ jobs:
                 copy { from "../../games/mygame"; into "build/assets/games/mygame" }
             }
         }
+        
+        // --- دمج المعماريات في ملف واحد (Universal APK) ---
+        android {
+            splits {
+                abi {
+                    enable false
+                }
+            }
+            defaultConfig {
+                ndk {
+                    abiFilters 'armeabi-v7a', 'arm64-v8a'
+                }
+            }
+        }
         EOF
 
-    - name: Build Specific ABI
+    - name: Build Universal APK
       run: |
         cd android
         chmod +x gradlew
-        ./gradlew assembleRelease -Pandroid.abifilters=${{ matrix.abi }}
+        ./gradlew assembleRelease
       
     - name: Save Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: MyVoxelGame-${{ matrix.abi }}
-        path: android/app/build/outputs/apk/release/*-${{ matrix.abi }}-release-unsigned.apk
+        name: MyVoxelGame-Universal-APK
+        path: android/app/build/outputs/apk/release/*.apk
 
